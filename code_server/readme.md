@@ -2,6 +2,8 @@ The implementation code is in ./code_server/, and you can run the code with 'pyt
 
 If you haven't processed the data, you need to put the historical price data in ./code_server/historical_price/, and then run the given_data_process.py.
 
+And you can run plot.py to visualize the results.
+
 ./code_server/results/ is the results of DRQN.
 
 ./code_server/results_e/ is the results of DQN.

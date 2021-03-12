@@ -247,8 +247,8 @@ class Agent:
             self.policy_net = torch.load('models/policy_model', map_location=device)
             self.target_net = torch.load('models/target_model', map_location=device)
         else:
-            self.policy_net = DQN(state_size, self.action_size).to(device)
-            self.target_net = DQN(state_size, self.action_size).to(device)
+            self.policy_net = DRQN(state_size, self.action_size).to(device)
+            self.target_net = DRQN(state_size, self.action_size).to(device)
             for param_p, param_t in zip(self.policy_net.parameters(), self.target_net.parameters()): 
                 weight_init.normal_(param_p)
                 param_t = param_p
@@ -310,12 +310,18 @@ def optimize(self, step):
         param.grad.data.clamp_(-1, 1)
     self.optimizer.step()
 
+    # Soft Update
     if step % self.T == 0:
-        for param_policy, param_target in zip(self.policy_net.parameters(), self.target_net.parameters()):
-          	param_target = (1 - 0.001) * param_target + 0.001 * param_policy
+       target_update = copy.deepcopy(self.target_net.state_dict())
+       for k in target_update.keys():
+        target_update[k] = self.target_net.state_dict()[k] * (1 - 0.001) + self.policy_net.state_dict()[k] * 0.001
+       self.target_net.load_state_dict(target_update)
 ```
 
+The last part of the optimize function is the Soft Update process. A soft update means that the agent updates the target network frequently and very little each step, but not at once. The target network will move slightly to the value of Q-network.
+
 ## How to implement the Q-network in PyTorch
+
 We chose to use PyTorch as our deep learning framework for the implementation of the model.
 
 ![model_pic](./images/model_pic.png)
@@ -345,7 +351,7 @@ class DRQN(nn.Module):
         return self.last_linear(linear_in)
 ```
 
-After building the network architecture, we used experience replay memory for training our DRQN Network. It stores the transitions that the agent observes, allowing us to reuse this data later. By sampling from it randomly, the transitions that build up a batch are decorrelated. It has been shown that this greatly stabilizes and improves the DQN training procedure.
+After building the network architecture, we used experience replay memory for training our DRQN Network. It stores the transitions that the agent observes, allowing us to reuse this data later. By sampling from it randomly, the transitions that build up a batch are decorrelated. It has been shown that this greatly stabilizes and improves the DRQN training procedure.
 
 First, we define `Transition`. It is a named tuple representing a single transition in our environment. It essentially maps state-action pairs to their next_state and reward result.
 
@@ -402,11 +408,11 @@ The above code follows the basic logic as mentioned previously, i.e., at the beg
 
 ## Baseline methods setting
 
-We compare our DRL-based trading approach with several baseline methods, and they are 1) continuous buy / sell; 2) interval buy / sell; 3) e-greedy DRL (no Action Augmentation). 
+We compare our DRL-based trading approach with several baseline methods, and they are 1) continuous buy / sell; 2) interval trading; 3) e-greedy DRL (no Action Augmentation). 
 
-The first baseline assumes the agent always takes one action all the time with a fixed interval. For fair comparison, we also set the trading size of each action as 10,000, and the spread is 0.005. As actions of different time points are same, bull transaction or bear transaction, it is not reasonable to charge the cost of transaction at every state, we take the cost with the interval of 5 states (much less transaction cost than the DRL-based method).
+The first baseline assumes the agent always takes one action all the time with a fixed step size. For fair comparison, we also set the trading size of each action as 10,000, and the spread is 0.005. As actions of different time points are same, bull transaction or bear transaction, it is not reasonable to charge the cost of transaction at every state, we take the cost with the step size of 5 states (much less transaction cost than the DRL-based method).
 
-To implement the baseline of interval buy or sell, we divide the time period into 10 pieces and sell 10% stocks periodically at every interval. And each time we trade in a size of 10,000. Certainly, the agent also needs to pay the commission when taking selling action. 
+To implement the baseline 2 - interval trading, we divide the time period into 10 pieces and sell 10% stocks periodically at every interval. And each time we trade in a trade size of 10,000. Certainly, the agent also needs to pay the commission when taking selling action. 
 
 We set the third baseline as the model without Action Augmentation when training. This can be categorized as a e-greedy method with no modification to its algorithm part. 
 
@@ -444,3 +450,10 @@ Then we fix the spread as 0.0050, and change the trading size to see its influen
 
 Except for the ablation study of the spread and the trading size, we also conduct similar study on the gamma of the soft update, which is not included in the original paper. According to the results shown in the figure, different gammas will produce various performance, and for general speaking, the value of 0.0005 can achieve the best performance. The success of soft update and the relatively small value of gamma indicate that on-policy Q learning might perform badly in stock trading. Certainly, the model performance is dependent on a number of factors.
 
+## Roles
+
+For this project, 
+
+Lixu was in charge of processing the data, generating state features, building the DRL agent training environment, training the model, setting up Baseline 1 and 3, and conducting the ablation studies.
+
+Jing was in charge of implementing the DRQN network, building the DRL agent, setting up Baseline 2, and result visualization.
