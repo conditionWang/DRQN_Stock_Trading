@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_units', type=int, default=32, help="the number of units in a hidden layer")
     parser.add_argument('--T', type=int, default=96, help="the length of series data")
     parser.add_argument('--stock', type=str, default='AIG', help="determine which stock")
-    parser.add_argument('--seed', type=int, default=2038, help="random seed")
+    parser.add_argument('--seed', type=int, default=2037, help="random seed")
     parser.add_argument('--para_target', type=float, default=0.001, help="the parameter which controls the soft update")
 
     args = parser.parse_args()
