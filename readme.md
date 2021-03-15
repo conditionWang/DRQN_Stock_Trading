@@ -26,7 +26,7 @@ In the following implementation, we will take all these features into account an
 
 # How to process the given data of stock prices
 ## How to split the data set
-The given stock price data covers from 2015 to 2020 in minute-level, and the given index of each stock includes volume, open price, close price, etc. Considering our problem, we split and group the data with the interval of 30 minutes since 5 years is too long. To achieve this, we first change the time in csv into the form that is easy to be added and subtracted.
+The original data used in the paper charges hundreds of dollars, thus we use the data given by Prof. Liu directly. The given stock price data covers from 2015 to 2020 in minute-level, and the given index of each stock includes volume, open price, close price, etc. Considering our problem, we split and group the data with the interval of 30 minutes since 5 years is too long. To achieve this, we first change the time in csv into the form that is easy to be added and subtracted.
 ```python
 def parse_time(text):    
     year = int(text[0:4])
